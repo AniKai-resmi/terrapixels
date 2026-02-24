@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Pixel World</title>
+<style>
+  body {
+    background: #111;
+    text-align: center;
+    color: white;
+    font-family: Arial;
+  }
+  canvas {
+    border: 2px solid white;
+    margin-top: 20px;
+    cursor: crosshair;
+  }
+</style>
+</head>
+<body>
+
+<h2>Pixel Dünya</h2>
+
+<input type="color" id="colorPicker" value="#ff0000">
+
+<br>
+
+<canvas id="board" width="800" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
+const colorPicker = document.getElementById("colorPicker");
+
+const pixelSize = 10;
+
+// Grid çiz
+for (let x = 0; x < canvas.width; x += pixelSize) {
+  for (let y = 0; y < canvas.height; y += pixelSize) {
+    ctx.strokeStyle = "#222";
+    ctx.strokeRect(x, y, pixelSize, pixelSize);
+  }
+}
+
+canvas.addEventListener("click", function(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - rect.left) / pixelSize) * pixelSize;
+  const y = Math.floor((e.clientY - rect.top) / pixelSize) * pixelSize;
+
+  ctx.fillStyle = colorPicker.value;
+  ctx.fillRect(x, y, pixelSize, pixelSize);
+});
+</script>
+
+</body>
+</html>
