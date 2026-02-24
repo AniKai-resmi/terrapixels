@@ -2,135 +2,145 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>TerraPixels</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
+<title>Mini r/place</title>
 <style>
-html, body {
+body {
   margin: 0;
-  padding: 0;
-  height: 100%;
+  background: #111;
   overflow: hidden;
-}
-
-#map {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: 100vh;
-  width: 100vw;
-  position: relative;
+  flex-direction: column;
 }
 
-/* Canvas üstte */
-#pixelCanvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 500;
+canvas {
+  background: white;
+  image-rendering: pixelated;
+  cursor: crosshair;
 }
 
-/* 🎨 Renk Paleti */
-#palette {
-  position: absolute;
+.palette {
+  position: fixed;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  background: rgba(0,0,0,0.9);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  background: #222;
   padding: 10px;
-  border-radius: 12px;
-  display: grid;
-  grid-template-columns: repeat(16, 20px);
-  gap: 5px;
+  border-radius: 10px;
+  max-width: 90%;
+  justify-content: center;
 }
 
 .color {
-  width: 20px;
-  height: 20px;
-  border-radius: 3px;
+  width: 22px;
+  height: 22px;
   cursor: pointer;
-  border: 1px solid white;
+  border: 2px solid #333;
+}
+
+.color:hover {
+  border: 2px solid white;
 }
 </style>
 </head>
-
 <body>
 
-<div id="map"></div>
-<canvas id="pixelCanvas"></canvas>
-<div id="palette"></div>
+<canvas id="board"></canvas>
+
+<div class="palette" id="palette"></div>
 
 <script>
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
 
-/* 🌍 Harita */
-var map = L.map('map').setView([20, 0], 3);
+const gridSize = 200;
+let pixelSize = 4;
+let scale = 1;
+let offsetX = 0;
+let offsetY = 0;
+let currentColor = "black";
 
-L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+canvas.width = 600;
+canvas.height = 600;
 
-/* 🎨 Canvas Ayar */
-var canvas = document.getElementById("pixelCanvas");
-var ctx = canvas.getContext("2d");
-
-function resizeCanvas() {
-  canvas.width = map.getSize().x;
-  canvas.height = map.getSize().y;
+const pixels = [];
+for (let y = 0; y < gridSize; y++) {
+  pixels[y] = [];
+  for (let x = 0; x < gridSize; x++) {
+    pixels[y][x] = "white";
+  }
 }
-resizeCanvas();
 
-map.on("resize", resizeCanvas);
-map.on("move", resizeCanvas);
-
-/* 🔥 Küçük Pixel */
-var pixelSize = 3; // daha küçük istersen 2 yap
-
-var selectedColor = "#ff0000";
-
-/* 🎨 32 Renk */
-var colors = [
-"#000000","#3c3c3c","#787878","#d2d2d2","#ffffff",
-"#600018","#ed1c24","#ff7f27","#fff200",
-"#00a2e8","#3f48cc","#a349a4",
-"#22b14c","#b5e61d",
-"#ffaec9","#ffc90e",
-"#7f0000","#b97a57","#c8bfe7",
-"#7092be","#99d9ea","#c3c3c3",
-"#880015","#ff0000","#ff6a00",
-"#ffd800","#00ff00","#00ffff",
-"#0000ff","#ff00ff",
-"#8b4513","#2e8b57"
+const colors = [
+  "black","white","gray","red","orange","yellow",
+  "green","lime","cyan","blue","purple","pink",
+  "brown","#8B4513","#FFD700","#00FF7F","#FF1493"
 ];
 
-var paletteDiv = document.getElementById("palette");
+const palette = document.getElementById("palette");
 
 colors.forEach(color => {
-  var btn = document.createElement("div");
-  btn.className = "color";
-  btn.style.background = color;
-
-  btn.addEventListener("click", function() {
-    selectedColor = color;
-  });
-
-  paletteDiv.appendChild(btn);
+  const div = document.createElement("div");
+  div.className = "color";
+  div.style.background = color;
+  div.onclick = () => currentColor = color;
+  palette.appendChild(div);
 });
 
-/* 🟩 Pixel Koyma */
-map.getContainer().addEventListener("click", function(e) {
+function draw() {
+  ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+  ctx.clearRect(-offsetX/scale, -offsetY/scale, canvas.width/scale, canvas.height/scale);
 
-  var rect = canvas.getBoundingClientRect();
-  var x = e.clientX - rect.left;
-  var y = e.clientY - rect.top;
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
+      ctx.fillStyle = pixels[y][x];
+      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+    }
+  }
+}
 
-  var snappedX = Math.floor(x / pixelSize) * pixelSize;
-  var snappedY = Math.floor(y / pixelSize) * pixelSize;
+canvas.addEventListener("click", e => {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - rect.left - offsetX) / (pixelSize * scale));
+  const y = Math.floor((e.clientY - rect.top - offsetY) / (pixelSize * scale));
 
-  ctx.fillStyle = selectedColor;
-  ctx.fillRect(snappedX, snappedY, pixelSize, pixelSize);
-
+  if (x >= 0 && y >= 0 && x < gridSize && y < gridSize) {
+    pixels[y][x] = currentColor;
+    draw();
+  }
 });
 
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  const zoom = e.deltaY < 0 ? 1.1 : 0.9;
+  scale *= zoom;
+  draw();
+});
+
+let dragging = false;
+let lastX, lastY;
+
+canvas.addEventListener("mousedown", e => {
+  dragging = true;
+  lastX = e.clientX;
+  lastY = e.clientY;
+});
+
+canvas.addEventListener("mouseup", () => dragging = false);
+
+canvas.addEventListener("mousemove", e => {
+  if (!dragging) return;
+  offsetX += e.clientX - lastX;
+  offsetY += e.clientY - lastY;
+  lastX = e.clientX;
+  lastY = e.clientY;
+  draw();
+});
+
+draw();
 </script>
 
 </body>
