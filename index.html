@@ -2,167 +2,95 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Mini r/place</title>
+<title>TerraPixels</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <style>
-body{
+html, body {
   margin:0;
-  background:#111;
-  overflow:hidden;
+  padding:0;
+  height:100%;
 }
 
-canvas{
-  display:block;
-  margin:auto;
-  background:#222; /* dünya dışı karanlık */
-  image-rendering:pixelated;
-  cursor:crosshair;
+#map {
+  height:100vh;
+  width:100vw;
 }
 
-.palette{
-  position:fixed;
+#palette {
+  position:absolute;
   bottom:20px;
   left:50%;
   transform:translateX(-50%);
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  background:#000;
+  z-index:1000;
+  background:rgba(0,0,0,0.8);
   padding:10px;
   border-radius:10px;
-  max-width:90%;
-  justify-content:center;
+  display:flex;
+  gap:6px;
 }
 
-.color{
+.color {
   width:22px;
   height:22px;
+  border-radius:4px;
   cursor:pointer;
-  border:2px solid #333;
-}
-
-.color:hover{
   border:2px solid white;
 }
 </style>
 </head>
+
 <body>
 
-<canvas id="board"></canvas>
-<div class="palette" id="palette"></div>
+<div id="map"></div>
+<div id="palette"></div>
 
 <script>
-const canvas=document.getElementById("board");
-const ctx=canvas.getContext("2d");
 
-canvas.width=800;
-canvas.height=800;
+var map = L.map('map').setView([20,0],2);
 
-const gridSize=200;
-let pixelSize=4;
-let scale=1;
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution:'&copy; OpenStreetMap contributors'
+}).addTo(map);
 
-let worldSize=gridSize*pixelSize;
+var selectedColor = "red";
 
-let offsetX=(canvas.width-worldSize)/2;
-let offsetY=(canvas.height-worldSize)/2;
-
-let currentColor="black";
-
-const pixels=[];
-for(let y=0;y<gridSize;y++){
-  pixels[y]=[];
-  for(let x=0;x<gridSize;x++){
-    pixels[y][x]="white";
-  }
-}
-
-const colors=[
+var colors = [
 "black","white","gray","red","orange","yellow",
-"green","lime","cyan","blue","purple","pink",
-"brown","#8B4513","#FFD700","#00FF7F","#FF1493"
+"green","cyan","blue","purple","pink","brown"
 ];
 
-const palette=document.getElementById("palette");
+var palette = document.getElementById("palette");
 
 colors.forEach(color=>{
-  const div=document.createElement("div");
+  var div=document.createElement("div");
   div.className="color";
   div.style.background=color;
-  div.onclick=()=>currentColor=color;
+  div.onclick=()=>selectedColor=color;
   palette.appendChild(div);
 });
 
-function draw(){
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+var pixelSize = 1; // derece bazlı küçük kare
 
-  ctx.setTransform(scale,0,0,scale,offsetX,offsetY);
+map.on("click", function(e){
 
-  /* Dünya arka planı */
-  ctx.fillStyle="#fff";
-  ctx.fillRect(0,0,worldSize,worldSize);
+  var lat = Math.floor(e.latlng.lat / pixelSize) * pixelSize;
+  var lng = Math.floor(e.latlng.lng / pixelSize) * pixelSize;
 
-  for(let y=0;y<gridSize;y++){
-    for(let x=0;x<gridSize;x++){
-      ctx.fillStyle=pixels[y][x];
-      ctx.fillRect(
-        x*pixelSize,
-        y*pixelSize,
-        pixelSize,
-        pixelSize
-      );
-    }
-  }
+  L.rectangle([
+    [lat,lng],
+    [lat+pixelSize,lng+pixelSize]
+  ],{
+    color:selectedColor,
+    fillColor:selectedColor,
+    fillOpacity:1,
+    weight:0
+  }).addTo(map);
 
-  /* Dünya kenar çizgisi */
-  ctx.strokeStyle="#000";
-  ctx.lineWidth=2/scale;
-  ctx.strokeRect(0,0,worldSize,worldSize);
-}
-
-canvas.addEventListener("click",e=>{
-  const rect=canvas.getBoundingClientRect();
-  const x=Math.floor(
-    (e.clientX-rect.left-offsetX)/(pixelSize*scale)
-  );
-  const y=Math.floor(
-    (e.clientY-rect.top-offsetY)/(pixelSize*scale)
-  );
-
-  if(x>=0&&y>=0&&x<gridSize&&y<gridSize){
-    pixels[y][x]=currentColor;
-    draw();
-  }
 });
 
-canvas.addEventListener("wheel",e=>{
-  e.preventDefault();
-  const zoom=e.deltaY<0?1.1:0.9;
-  scale*=zoom;
-  draw();
-});
-
-let dragging=false;
-let lastX,lastY;
-
-canvas.addEventListener("mousedown",e=>{
-  dragging=true;
-  lastX=e.clientX;
-  lastY=e.clientY;
-});
-
-canvas.addEventListener("mouseup",()=>dragging=false);
-
-canvas.addEventListener("mousemove",e=>{
-  if(!dragging)return;
-  offsetX+=e.clientX-lastX;
-  offsetY+=e.clientY-lastY;
-  lastX=e.clientX;
-  lastY=e.clientY;
-  draw();
-});
-
-draw();
 </script>
 
 </body>
