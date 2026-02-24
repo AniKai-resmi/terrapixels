@@ -19,16 +19,11 @@ html, body {
   width: 100vw;
 }
 
-/* Renk seçici */
 #colorPicker {
   position: absolute;
   top: 15px;
   left: 60px;
   z-index: 1000;
-  width: 50px;
-  height: 35px;
-  border: none;
-  cursor: pointer;
 }
 </style>
 </head>
@@ -40,37 +35,34 @@ html, body {
 
 <script>
 
-// 🌍 Dünya başlangıç görünümü
 var map = L.map('map', {
   worldCopyJump: false,
   maxBounds: [[-90, -180], [90, 180]]
 }).setView([20, 0], 2);
 
-// 🗺 Harita (şehir isimli, renkli)
 L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
   noWrap: true
 }).addTo(map);
 
-// 🎨 Renk sistemi
 var selectedColor = document.getElementById("colorPicker").value;
-
 document.getElementById("colorPicker").addEventListener("input", function() {
   selectedColor = this.value;
 });
 
-// 🟩 Grid mantıklı pixel sistemi
-var pixelSize = 1; // derece bazlı (küçültmek için 0.5 yapabilirsin)
+var pixelSize = 20; // gerçek kare boyutu (ekran pixel)
 
 map.on('click', function(e) {
 
-  var lat = Math.floor(e.latlng.lat / pixelSize) * pixelSize;
-  var lng = Math.floor(e.latlng.lng / pixelSize) * pixelSize;
+  var point = map.latLngToContainerPoint(e.latlng);
 
-  L.rectangle([
-    [lat, lng],
-    [lat + pixelSize, lng + pixelSize]
-  ], {
+  var snappedX = Math.floor(point.x / pixelSize) * pixelSize;
+  var snappedY = Math.floor(point.y / pixelSize) * pixelSize;
+
+  var topLeft = map.containerPointToLatLng([snappedX, snappedY]);
+  var bottomRight = map.containerPointToLatLng([snappedX + pixelSize, snappedY + pixelSize]);
+
+  L.rectangle([topLeft, bottomRight], {
     color: selectedColor,
     fillColor: selectedColor,
     fillOpacity: 1,
