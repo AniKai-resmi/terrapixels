@@ -12,34 +12,44 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 #map {
   height: 100vh;
   width: 100vw;
+  position: relative;
 }
 
-/* 🎨 PALET */
+/* Canvas üstte */
+#pixelCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 500;
+}
+
+/* 🎨 Renk Paleti */
 #palette {
   position: absolute;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0,0,0,0.9);
   padding: 10px;
   border-radius: 12px;
   display: grid;
-  grid-template-columns: repeat(16, 22px);
-  gap: 6px;
+  grid-template-columns: repeat(16, 20px);
+  gap: 5px;
 }
 
 .color {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
   cursor: pointer;
-  border: 2px solid white;
+  border: 1px solid white;
 }
 </style>
 </head>
@@ -47,23 +57,37 @@ html, body {
 <body>
 
 <div id="map"></div>
+<canvas id="pixelCanvas"></canvas>
 <div id="palette"></div>
 
 <script>
 
-var map = L.map('map', {
-  worldCopyJump: false,
-  maxBounds: [[-85, -180], [85, 180]]
-}).setView([20, 0], 3);
+/* 🌍 Harita */
+var map = L.map('map').setView([20, 0], 3);
 
 L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors',
-  noWrap: true
+  attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
+
+/* 🎨 Canvas Ayar */
+var canvas = document.getElementById("pixelCanvas");
+var ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+  canvas.width = map.getSize().x;
+  canvas.height = map.getSize().y;
+}
+resizeCanvas();
+
+map.on("resize", resizeCanvas);
+map.on("move", resizeCanvas);
+
+/* 🔥 Küçük Pixel */
+var pixelSize = 3; // daha küçük istersen 2 yap
 
 var selectedColor = "#ff0000";
 
-/* 🎨 32 RENK */
+/* 🎨 32 Renk */
 var colors = [
 "#000000","#3c3c3c","#787878","#d2d2d2","#ffffff",
 "#600018","#ed1c24","#ff7f27","#fff200",
@@ -84,7 +108,6 @@ colors.forEach(color => {
   var btn = document.createElement("div");
   btn.className = "color";
   btn.style.background = color;
-  btn.dataset.color = color;
 
   btn.addEventListener("click", function() {
     selectedColor = color;
@@ -93,23 +116,18 @@ colors.forEach(color => {
   paletteDiv.appendChild(btn);
 });
 
-/* 🔥 R/PLACE GRID SİSTEM */
-var gridSize = 1; // küçültmek istersen 0.5 yap
+/* 🟩 Pixel Koyma */
+map.getContainer().addEventListener("click", function(e) {
 
-map.on('click', function(e) {
+  var rect = canvas.getBoundingClientRect();
+  var x = e.clientX - rect.left;
+  var y = e.clientY - rect.top;
 
-  var lat = Math.floor(e.latlng.lat / gridSize) * gridSize;
-  var lng = Math.floor(e.latlng.lng / gridSize) * gridSize;
+  var snappedX = Math.floor(x / pixelSize) * pixelSize;
+  var snappedY = Math.floor(y / pixelSize) * pixelSize;
 
-  L.rectangle([
-    [lat, lng],
-    [lat + gridSize, lng + gridSize]
-  ], {
-    color: selectedColor,
-    fillColor: selectedColor,
-    fillOpacity: 1,
-    weight: 0
-  }).addTo(map);
+  ctx.fillStyle = selectedColor;
+  ctx.fillRect(snappedX, snappedY, pixelSize, pixelSize);
 
 });
 
