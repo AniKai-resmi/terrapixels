@@ -29,16 +29,16 @@ html, body {
   left:50%;
   transform:translateX(-50%);
   z-index:1000;
-  background:rgba(0,0,0,0.8);
+  background:rgba(0,0,0,0.85);
   padding:10px;
-  border-radius:12px;
+  border-radius:14px;
   display:flex;
   gap:6px;
 }
 
 .color {
-  width:20px;
-  height:20px;
+  width:18px;
+  height:18px;
   border-radius:4px;
   cursor:pointer;
   border:2px solid white;
@@ -54,7 +54,9 @@ html, body {
 <script>
 
 var map = L.map('map', {
-  worldCopyJump:false
+  worldCopyJump:false,
+  minZoom:2,
+  maxZoom:18
 }).setView([20,0],2);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -62,7 +64,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution:'© OpenStreetMap'
 }).addTo(map);
 
-map.invalidateSize(); // önemli
+map.invalidateSize();
 
 var selectedColor = "red";
 
@@ -81,7 +83,7 @@ colors.forEach(color=>{
   palette.appendChild(div);
 });
 
-var pixelSize = 2;
+var pixelSize = 0.05; // küçük pixel
 
 map.on("click", function(e){
 
