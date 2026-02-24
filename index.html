@@ -2,45 +2,43 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Pixel World</title>
+<title>TerraPixels</title>
 <style>
   body {
-    background: #111;
+    margin: 0;
+    background: #0b0f1a;
     text-align: center;
     color: white;
     font-family: Arial;
   }
   canvas {
     border: 2px solid white;
-    margin-top: 20px;
     cursor: crosshair;
   }
 </style>
 </head>
 <body>
 
-<h2>Pixel Dünya</h2>
-
+<h1>🌍 TerraPixels</h1>
 <input type="color" id="colorPicker" value="#ff0000">
+<br><br>
 
-<br>
-
-<canvas id="board" width="800" height="400"></canvas>
+<canvas id="board" width="1200" height="600"></canvas>
 
 <script>
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
 const colorPicker = document.getElementById("colorPicker");
 
-const pixelSize = 10;
+const pixelSize = 8;
 
-// Grid çiz
-for (let x = 0; x < canvas.width; x += pixelSize) {
-  for (let y = 0; y < canvas.height; y += pixelSize) {
-    ctx.strokeStyle = "#222";
-    ctx.strokeRect(x, y, pixelSize, pixelSize);
-  }
-}
+// 🌍 Dünya haritası arkaplan
+const img = new Image();
+img.src = "https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg";
+
+img.onload = () => {
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+};
 
 canvas.addEventListener("click", function(e) {
   const rect = canvas.getBoundingClientRect();
