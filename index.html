@@ -19,19 +19,42 @@ html, body {
   width: 100vw;
 }
 
-#colorPicker {
+/* 🎨 Alt Orta Renk Paleti */
+#palette {
   position: absolute;
-  top: 15px;
-  left: 60px;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1000;
+  background: rgba(0,0,0,0.7);
+  padding: 10px 15px;
+  border-radius: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.color {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid white;
 }
 </style>
 </head>
 
 <body>
 
-<input type="color" id="colorPicker" value="#ff0000">
 <div id="map"></div>
+
+<div id="palette">
+  <div class="color" style="background:#ff0000" data-color="#ff0000"></div>
+  <div class="color" style="background:#00ff00" data-color="#00ff00"></div>
+  <div class="color" style="background:#0000ff" data-color="#0000ff"></div>
+  <div class="color" style="background:#ffff00" data-color="#ffff00"></div>
+  <div class="color" style="background:#000000" data-color="#000000"></div>
+  <div class="color" style="background:#ffffff" data-color="#ffffff"></div>
+</div>
 
 <script>
 
@@ -45,24 +68,26 @@ L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
   noWrap: true
 }).addTo(map);
 
-var selectedColor = document.getElementById("colorPicker").value;
-document.getElementById("colorPicker").addEventListener("input", function() {
-  selectedColor = this.value;
+var selectedColor = "#ff0000";
+
+document.querySelectorAll(".color").forEach(btn => {
+  btn.addEventListener("click", function() {
+    selectedColor = this.dataset.color;
+  });
 });
 
-var pixelSize = 20; // gerçek kare boyutu (ekran pixel)
+/* 🔥 Sabit harita pixel boyutu */
+var pixelSize = 1; // derece bazlı sabit
 
 map.on('click', function(e) {
 
-  var point = map.latLngToContainerPoint(e.latlng);
+  var lat = Math.floor(e.latlng.lat / pixelSize) * pixelSize;
+  var lng = Math.floor(e.latlng.lng / pixelSize) * pixelSize;
 
-  var snappedX = Math.floor(point.x / pixelSize) * pixelSize;
-  var snappedY = Math.floor(point.y / pixelSize) * pixelSize;
-
-  var topLeft = map.containerPointToLatLng([snappedX, snappedY]);
-  var bottomRight = map.containerPointToLatLng([snappedX + pixelSize, snappedY + pixelSize]);
-
-  L.rectangle([topLeft, bottomRight], {
+  L.rectangle([
+    [lat, lng],
+    [lat + pixelSize, lng + pixelSize]
+  ], {
     color: selectedColor,
     fillColor: selectedColor,
     fillOpacity: 1,
