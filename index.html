@@ -19,24 +19,25 @@ html, body {
   width: 100vw;
 }
 
-/* 🎨 Alt Orta Renk Paleti */
+/* 🎨 PALET */
 #palette {
   position: absolute;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
-  background: rgba(0,0,0,0.7);
-  padding: 10px 15px;
+  background: rgba(0,0,0,0.85);
+  padding: 10px;
   border-radius: 12px;
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(16, 22px);
+  gap: 6px;
 }
 
 .color {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
   cursor: pointer;
   border: 2px solid white;
 }
@@ -46,22 +47,14 @@ html, body {
 <body>
 
 <div id="map"></div>
-
-<div id="palette">
-  <div class="color" style="background:#ff0000" data-color="#ff0000"></div>
-  <div class="color" style="background:#00ff00" data-color="#00ff00"></div>
-  <div class="color" style="background:#0000ff" data-color="#0000ff"></div>
-  <div class="color" style="background:#ffff00" data-color="#ffff00"></div>
-  <div class="color" style="background:#000000" data-color="#000000"></div>
-  <div class="color" style="background:#ffffff" data-color="#ffffff"></div>
-</div>
+<div id="palette"></div>
 
 <script>
 
 var map = L.map('map', {
   worldCopyJump: false,
-  maxBounds: [[-90, -180], [90, 180]]
-}).setView([20, 0], 2);
+  maxBounds: [[-85, -180], [85, 180]]
+}).setView([20, 0], 3);
 
 L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
@@ -70,23 +63,47 @@ L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
 
 var selectedColor = "#ff0000";
 
-document.querySelectorAll(".color").forEach(btn => {
+/* 🎨 32 RENK */
+var colors = [
+"#000000","#3c3c3c","#787878","#d2d2d2","#ffffff",
+"#600018","#ed1c24","#ff7f27","#fff200",
+"#00a2e8","#3f48cc","#a349a4",
+"#22b14c","#b5e61d",
+"#ffaec9","#ffc90e",
+"#7f0000","#b97a57","#c8bfe7",
+"#7092be","#99d9ea","#c3c3c3",
+"#880015","#ff0000","#ff6a00",
+"#ffd800","#00ff00","#00ffff",
+"#0000ff","#ff00ff",
+"#8b4513","#2e8b57"
+];
+
+var paletteDiv = document.getElementById("palette");
+
+colors.forEach(color => {
+  var btn = document.createElement("div");
+  btn.className = "color";
+  btn.style.background = color;
+  btn.dataset.color = color;
+
   btn.addEventListener("click", function() {
-    selectedColor = this.dataset.color;
+    selectedColor = color;
   });
+
+  paletteDiv.appendChild(btn);
 });
 
-/* 🔥 Sabit harita pixel boyutu */
-var pixelSize = 1; // derece bazlı sabit
+/* 🔥 R/PLACE GRID SİSTEM */
+var gridSize = 1; // küçültmek istersen 0.5 yap
 
 map.on('click', function(e) {
 
-  var lat = Math.floor(e.latlng.lat / pixelSize) * pixelSize;
-  var lng = Math.floor(e.latlng.lng / pixelSize) * pixelSize;
+  var lat = Math.floor(e.latlng.lat / gridSize) * gridSize;
+  var lng = Math.floor(e.latlng.lng / gridSize) * gridSize;
 
   L.rectangle([
     [lat, lng],
-    [lat + pixelSize, lng + pixelSize]
+    [lat + gridSize, lng + gridSize]
   ], {
     color: selectedColor,
     fillColor: selectedColor,
